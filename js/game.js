@@ -136,7 +136,8 @@ function startLevel(n) {
   level = n;
   resetWorld();
   if (n === 1) materials = 0;
-  player = { x: 0, y: 0, hp: D.hp, maxhp: D.hp, ang: 0, cool: 0, bcool: 0, burst: 0, hitT: 0, r: 24 };
+  player = { x: 0, y: 0, hp: D.hp, maxhp: D.hp, ang: 0, cool: 0, bcool: 0, burst: 0, hitT: 0, r: 24,
+             speed: 0, moveAng: -Math.PI / 2, walkT: 0, flashT: 0 };
   var setup = LEVEL_SETUPS[n];
   setup.decor();
   spawnEnemies(n);

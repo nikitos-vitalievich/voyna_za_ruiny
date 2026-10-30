@@ -101,6 +101,17 @@ function movePlayerByLevel(dt) {
   }
   player.x += m[0] * speed * dt;
   player.y += m[1] * speed * dt;
+  // Данные для анимации бойца (уровень 4): направление и скорость бега, фаза шагов.
+  if (level === 4) {
+    var sp = Math.sqrt(m[0] * m[0] + m[1] * m[1]) * speed;
+    player.speed = sp;
+    if (sp > 20) {
+      player.moveAng = Math.atan2(m[1], m[0]);
+      player.walkT += dt * (7 + sp / 40);
+    } else {
+      player.walkT += dt * 1.5;
+    }
+  }
   if (level === 1) {
     player.x = clamp(player.x, 40, W - 40);
     player.y = clamp(player.y, H * 0.45, H - 40);
@@ -126,6 +137,7 @@ function updatePlayerWeapons(dt) {
       player.cool = WEAPONS.rifle.cooldown;
       player.burst--;
       fireBullet(player.x, player.y, player.ang + rand(-0.03, 0.03), WEAPONS.rifle, 'p');
+      player.flashT = 0.07; // вспышка из ствола автомата
     }
     if (player.burst <= 0 && player.bcool > 0) player.bcool -= dt;
     if (mouse.down && player.burst <= 0 && player.bcool <= 0) {
@@ -144,6 +156,7 @@ function updatePlayerWeapons(dt) {
 
 function updatePlayer(dt) {
   if (player.hitT > 0) player.hitT -= dt;
+  if (player.flashT > 0) player.flashT -= dt;
   player.cool -= dt;
   movePlayerByLevel(dt);
   player.ang = Math.atan2(mouse.y - player.y, mouse.x - player.x);
@@ -183,12 +196,18 @@ var ENEMY_AI = {
   },
   sold: function (e, dt, D) {
     var dd = dist(e.x, e.y, player.x, player.y);
+    var moving = false;
     if (dd > 180) {
       e.x += (player.x - e.x) / dd * 58 * dt;
       e.y += (player.y - e.y) / dd * 58 * dt;
+      moving = true;
+      e.moveAng = Math.atan2(player.y - e.y, player.x - e.x);
     }
+    e.speed = moving ? 58 : 0;
+    e.walkT = (e.walkT || 0) + dt * (moving ? 9 : 1.5);
     e.ang = Math.atan2(player.y - e.y, player.x - e.x);
-    if (e.cool <= 0) { e.cool = rand(1.8, 3.2) * D.fireMul; enemyShoot(e, 430, 9 * D.dmg, 3, 'bullet'); }
+    if (e.cool <= 0) { e.cool = rand(1.8, 3.2) * D.fireMul; enemyShoot(e, 430, 9 * D.dmg, 3, 'bullet'); e.flashT = 0.08; }
+    if (e.flashT > 0) e.flashT -= dt;
   }
 };
 
