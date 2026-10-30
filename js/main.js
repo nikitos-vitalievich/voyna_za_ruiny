@@ -45,12 +45,17 @@ function loop(t) {
   if (!lastT) lastT = t;
   var dt = Math.min(MAX_DT, (t - lastT) / 1000);
   lastT = t;
+  if (gameState === 'menu') {
+    renderMenuFrame();
+    return;
+  }
   if (gameState === 'game' && player) update(dt);
-  if (gameState !== 'menu') render();
+  render();
 }
 
 requestAnimationFrame(loop);
 
 // Экспорт для кнопок меню (inline onclick в HTML).
 window.__startLevel = startLevel;
+window.setPlayerColor = setPlayerColor;
 window.gameReady = true;

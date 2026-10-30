@@ -243,11 +243,12 @@ function damagePlayer(d) {
 
 // ===== Окончание уровня / миссии =====
 
-function showOverlay(title, text, btn, action) {
+// Экран-заглушка с одной единственной кнопкой — выход в меню.
+var BTN_BACK = '<button type="button" class="btn big" onclick="toMenu()">В МЕНЮ</button>';
+
+function showEndOverlay(title, text) {
   var o = document.getElementById('overlay2');
-  o.innerHTML = '<h2>' + title + '</h2><p>' + text + '</p>' +
-    '<button type="button" class="btn big" onclick="' + action + '">' + btn + '</button>' +
-    '<button type="button" class="btn" onclick="toMenu()">В МЕНЮ</button>';
+  o.innerHTML = '<h2>' + title + '</h2><p>' + text + '</p>' + BTN_BACK;
   o.style.display = 'flex';
 }
 
@@ -257,9 +258,13 @@ function winLevel() {
   gameState = 'between';
   melody('win');
   if (level >= 4) {
-    showOverlay('ПОБЕДА!', 'Вы прошли все уровни и защитили руины! Материалы: ' + materials, 'В МЕНЮ', 'toMenu()');
+    showEndOverlay('ПОБЕДА!', 'Вы прошли все уровни и защитили руины! Материалы: ' + materials);
   } else {
-    showOverlay('УРОВЕНЬ ПРОЙДЕН', 'Уровень ' + level + ' зачищен. Материалы: ' + materials, 'СЛЕДУЮЩИЙ УРОВЕНЬ', 'nextLevel()');
+    // Промежуточный экран уровня: переход по кнопке, выход в меню — одной кнопкой.
+    var o = document.getElementById('overlay2');
+    o.innerHTML = '<h2>УРОВЕНЬ ПРОЙДЕН</h2><p>Уровень ' + level + ' зачищен. Материалы: ' + materials + '</p>' +
+      '<button type="button" class="btn big" onclick="nextLevel()">СЛЕДУЮЩИЙ УРОВЕНЬ</button>' + BTN_BACK;
+    o.style.display = 'flex';
   }
 }
 
@@ -268,7 +273,7 @@ function gameOver(reason) {
   stopEngine();
   gameState = 'over';
   melody('lose');
-  showOverlay('МИССИЯ ПРОВАЛЕНА', reason, 'ЗАНОВО', 'restartLevel()');
+  showEndOverlay('МИССИЯ ПРОВАЛЕНА', reason);
 }
 
 function nextLevel() { startLevel(level + 1); }
@@ -276,6 +281,7 @@ function restartLevel() { startLevel(level); }
 
 function toMenu() {
   gameState = 'menu';
+  player = null;
   stopSiren();
   stopEngine();
   document.getElementById('menu').style.display = 'flex';
