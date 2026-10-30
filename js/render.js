@@ -51,90 +51,100 @@ function drawBoat(x, y, ang, c1, c2) {
   ctx.restore();
 }
 
-// Фигурка бойца: анатомичная фигура с автоматом в руках, шагает при беге.
-// facing — куда смотрит (наводка), moveAng — куда бежит (по ним считается разворот корпуса).
+// Боец в виде сверху (top-down): корпус развёрнут по ходу, каска — центр фигурки,
+// автомат с руками всегда наведён на цель, ноги шагают по направлению движения.
 function drawSold(x, y, ang, c1, c2, opts) {
   opts = opts || {};
-  var face = ang || 0;
-  var mx = typeof opts.moveAng === 'number' ? opts.moveAng : face;
-  var moving = !!opts.moving && opts.speed > 20;
-  var walk = (opts.walkT || 0);
-  var step = (moving ? Math.sin(walk) : Math.sin(walk) * 0.15) * 7;
-
-  // Тень под бойцом
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath(); ctx.ellipse(0, 2, 12, 6, 0, 0, TAU); ctx.fill();
-  ctx.restore();
+  var face = ang || 0;                                  // направление взгляда/наводки
+  var body = (typeof opts.bodyAng === 'number') ? opts.bodyAng : face; // куда развёрнут корпус
+  var walk = opts.walkT || 0;
+  var swing = Math.sin(walk) * 6;                      // амплитуда шага ног
+  var breathe = Math.sin(walk) * 0.6;                  // лёгкое покачивание в стойке
 
   ctx.save();
   ctx.translate(x, y);
 
-  // Корпус развёрнут в сторону движения (макс. ±70° от направления на цель)
-  var d = ((mx - face + Math.PI * 3) % TAU) - Math.PI;
-  ctx.rotate(face + Math.PI / 2 + clamp(d, -1.22, 1.22));
+  // Тень слегка смещена от света (условно сверху-слева)
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(1.5, 2, 13, 11, 0, 0, TAU); ctx.fill();
 
-  // --- Ноги (шаг вперёд-назад) ---
+  ctx.rotate(body);                                    // ориентация корпуса по ходу движения
+
+  // --- Ноги: шаг назад-вперёд вдоль линии движения ---
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#2f3324';
-  ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(-3, 3); ctx.lineTo(-3 - step, 12 - Math.abs(step) * 0.2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(3, 3); ctx.lineTo(3 + step, 12 - Math.abs(step) * 0.2); ctx.stroke();
-  // берцы
-  ctx.strokeStyle = '#1a1c14';
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(-3 - step, 12); ctx.lineTo(-3 - step - 2, 13); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(3 + step, 12); ctx.lineTo(3 + step + 2, 13); ctx.stroke();
+  ctx.strokeStyle = '#3a4030';                         // штанины камуфляжа
+  ctx.lineWidth = 4.5;
+  ctx.beginPath(); ctx.moveTo(-3.5, 1); ctx.lineTo(-3.5 - swing, 9); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(3.5, 1); ctx.lineTo(3.5 + swing, 9); ctx.stroke();
+  ctx.strokeStyle = '#1c1e15';                         // берцы
+  ctx.lineWidth = 3.2;
+  ctx.beginPath(); ctx.moveTo(-3.5 - swing, 9); ctx.lineTo(-3.5 - swing - 1.5, 11.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(3.5 + swing, 9); ctx.lineTo(3.5 + swing + 1.5, 11.5); ctx.stroke();
 
-  // --- Рюкзак за спиной ---
+  // --- Рюкзак за спиной (противоположно лицу) ---
   ctx.fillStyle = '#3b4030';
-  rr(-9, -8, 6, 12, 2); ctx.fill();
+  rr(-6, 2 + breathe, 12, 7, 3); ctx.fill();
+  ctx.fillStyle = '#2e3226';
+  ctx.fillRect(-4, 4 + breathe, 8, 2);
 
-  // --- Туловище: камуфляжная форма ---
+  // --- Плечи/торс: широкий сверху, к талии уже ---
   ctx.fillStyle = c1;
-  rr(-6, -10, 12, 16, 4); ctx.fill();
-  // разгрузки/жилет
+  ctx.beginPath();
+  ctx.moveTo(-8.5, -5);
+  ctx.quadraticCurveTo(0, -8, 8.5, -5);
+  ctx.lineTo(6, 4);
+  ctx.quadraticCurveTo(0, 6.5, -6, 4);
+  ctx.closePath(); ctx.fill();
+
+  // --- Тактический жилет со спины/боков (перед открыт для прицеливания) ---
   ctx.fillStyle = '#33382a';
-  rr(-5, -7, 10, 9, 2); ctx.fill();
-  ctx.fillStyle = '#4a5038';
-  ctx.fillRect(-4, -6, 3, 3); ctx.fillRect(1, -6, 3, 3);
-  // плечи
-  ctx.fillStyle = c1;
-  circle(-6, -8, 3.2); circle(6, -8, 3.2);
+  ctx.beginPath(); ctx.arc(0, breathe * 0.4, 7.2, Math.PI * 0.22, Math.PI * 0.78); ctx.fill();
+  ctx.fillStyle = '#4a5038';                           // подсумки на лямках
+  ctx.fillRect(-6.5, -2 + breathe * 0.4, 2.6, 4);
+  ctx.fillRect(3.9, -2 + breathe * 0.4, 2.6, 4);
 
-  // --- Голова: каска и лицо ---
-  ctx.fillStyle = c2; // шея/оттенок формы
-  circle(0, -14, 5);
-  ctx.fillStyle = '#d9b38c'; // лицо
-  circle(1, -14, 3.4);
-  ctx.fillStyle = shade(c1, -18); // каска
-  ctx.beginPath(); ctx.arc(0, -14, 5.4, Math.PI * 0.15, Math.PI * 1.15); ctx.fill();
-  ctx.fillStyle = shade(c1, -32); // козырёк каски по направлению взгляда
-  ctx.fillRect(2, -15.5, 4.5, 2.4);
+  // --- Каска: почти плоский круг сверху, козырёк по направлению взгляда ---
+  var hx = Math.cos(face - body) * 2.2;               // позиция головы относительно корпуса
+  var hy = Math.sin(face - body) * 2.2;
+  ctx.fillStyle = '#d9b38c';                           // чуть виден воротник/шея
+  circle(hx, hy, 4.6);
+  ctx.fillStyle = shade(c1, -14);                      // купол каски
+  circle(hx, hy, 5.4);
+  ctx.fillStyle = shade(c1, -30);                      // ободок/козырёк
+  ctx.beginPath();
+  ctx.arc(hx, hy, 5.4, face - body - 1.05, face - body + 1.05);
+  ctx.arc(hx, hy, 4.1, face - body + 1.05, face - body - 1.05, true);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.16)';            // блик на куполе
+  ctx.beginPath(); ctx.arc(hx - 1.4, hy - 1.6, 2.2, 0, TAU); ctx.fill();
 
-  // --- Автомат: держим двумя руками, ствол совпадает с направлением стрельбы ---
-  ctx.rotate(-(face + Math.PI / 2 + clamp(d, -1.22, 1.22)) - (Math.PI / 2)); // теперь +X = направление взгляда
-  // руки
-  ctx.strokeStyle = c1;
-  ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(-5, -6); ctx.lineTo(4, -1.5); ctx.stroke();   // передняя рука на цевьё
-  ctx.beginPath(); ctx.moveTo(5, -6); ctx.lineTo(2, 0.5); ctx.stroke();     // задняя рука на рукоять
-  // оружие
-  ctx.strokeStyle = '#232323';
+  // --- Руки и автомат: всегда наведены на цель (face) ---
+  ctx.rotate(face - body);                             // теперь +X = направление на цель
+  ctx.strokeStyle = c1;                                // плечи/руки
+  ctx.lineWidth = 3.4;
+  ctx.beginPath(); ctx.moveTo(-5.5, -4.5); ctx.lineTo(3.5, -2.2); ctx.stroke(); // левая рука на цевьё
+  ctx.beginPath(); ctx.moveTo(5.5, -4.5); ctx.lineTo(3.5, 1.8); ctx.stroke();   // правая рука на рукоять
+  ctx.strokeStyle = '#232323';                         // ствольная коробка/ствол
+  ctx.lineWidth = 2.8;
+  ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(14, 0); ctx.stroke();
+  ctx.strokeStyle = '#3a2c1c';                         // деревянное цевьё
   ctx.lineWidth = 2.6;
-  ctx.beginPath(); ctx.moveTo(-2, 1.5); ctx.lineTo(13, 0); ctx.stroke();    // ствольная коробка/ствол
-  ctx.strokeStyle = '#3a2c1c';
-  ctx.lineWidth = 2.4;
-  ctx.beginPath(); ctx.moveTo(1, 1); ctx.lineTo(7, 0.4); ctx.stroke();      // деревянное цевьё
-  ctx.strokeStyle = '#232323';
+  ctx.beginPath(); ctx.moveTo(4, 0); ctx.lineTo(9, 0); ctx.stroke();
+  ctx.strokeStyle = '#232323';                         // магазин (изогнутый)
   ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(2, 1); ctx.lineTo(1, 5); ctx.stroke();        // магазин
-  ctx.beginPath(); ctx.moveTo(-2, 1.5); ctx.lineTo(-5, 2.5); ctx.stroke();  // приклад
-  // вспышка выстрела
+  ctx.beginPath(); ctx.moveTo(3, 0.5); ctx.quadraticCurveTo(2.2, 3.5, 1.2, 5); ctx.stroke();
+  ctx.strokeStyle = '#2c2418';                         // приклад
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(-8, 0.5); ctx.stroke();
+  ctx.strokeStyle = '#232323';                         // мушка
+  ctx.lineWidth = 1.6;
+  ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(12, -1.6); ctx.stroke();
+  // Вспышка у дульного среза (видна сверху)
   if (opts.flash) {
-    ctx.fillStyle = 'rgba(255,220,120,0.9)';
-    ctx.beginPath(); ctx.arc(14, 0, 3.5, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(255,220,120,0.95)';
+    ctx.beginPath(); ctx.arc(16, 0, 3.8, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(255,160,60,0.6)';
+    ctx.beginPath(); ctx.arc(16, 0, 6, 0, TAU); ctx.fill();
   }
   ctx.restore();
 }
@@ -243,7 +253,7 @@ function drawEnemy(e) {
   else if (e.type === 'boat') drawBoat(e.x, e.y, e.ang, col[0], col[1]);
   else if (e.type === 'turret') drawTurret(e);
   else drawSold(e.x, e.y, e.ang, col[0], col[1], {
-    moveAng: e.moveAng, moving: e.speed > 20, speed: e.speed, walkT: e.walkT, flash: e.flashT > 0
+    bodyAng: e.bodyAng, walkT: e.walkT, flash: e.flashT > 0
   });
   if (e.hitT > 0) {
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
@@ -263,7 +273,7 @@ function drawPlayerUnit() {
   else if (level === 2) drawPlane(p.x, p.y, col[0], col[1]);
   else if (level === 3) drawBoat(p.x, p.y, p.ang, col[0], col[1]);
   else drawSold(p.x, p.y, p.ang, col[0], col[1], {
-    moveAng: p.moveAng, moving: p.speed > 20, speed: p.speed, walkT: p.walkT, flash: p.flashT > 0
+    bodyAng: p.bodyAng, walkT: p.walkT, flash: p.flashT > 0
   });
   if (p.hitT > 0) {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';

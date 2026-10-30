@@ -101,12 +101,16 @@ function movePlayerByLevel(dt) {
   }
   player.x += m[0] * speed * dt;
   player.y += m[1] * speed * dt;
-  // Данные для анимации бойца (уровень 4): направление и скорость бега, фаза шагов.
+  // Данные для анимации бойца (уровень 4): корпус разворачивается по ходу движения,
+  // автомат остаётся наведён на цель (ang), ноги шагают с частотой от скорости.
   if (level === 4) {
     var sp = Math.sqrt(m[0] * m[0] + m[1] * m[1]) * speed;
     player.speed = sp;
     if (sp > 20) {
-      player.moveAng = Math.atan2(m[1], m[0]);
+      var want = Math.atan2(m[1], m[0]);
+      var cur = typeof player.bodyAng === 'number' ? player.bodyAng : want;
+      var da = ((want - cur + Math.PI * 3) % TAU) - Math.PI;
+      player.bodyAng = cur + da * Math.min(1, dt * 8);   // плавный разворот корпуса
       player.walkT += dt * (7 + sp / 40);
     } else {
       player.walkT += dt * 1.5;
@@ -201,7 +205,10 @@ var ENEMY_AI = {
       e.x += (player.x - e.x) / dd * 58 * dt;
       e.y += (player.y - e.y) / dd * 58 * dt;
       moving = true;
-      e.moveAng = Math.atan2(player.y - e.y, player.x - e.x);
+      var want = Math.atan2(player.y - e.y, player.x - e.x);
+      var cur = typeof e.bodyAng === 'number' ? e.bodyAng : want;
+      var da = ((want - cur + Math.PI * 3) % TAU) - Math.PI;
+      e.bodyAng = cur + da * Math.min(1, dt * 6);        // плавный разворот корпуса по ходу
     }
     e.speed = moving ? 58 : 0;
     e.walkT = (e.walkT || 0) + dt * (moving ? 9 : 1.5);
