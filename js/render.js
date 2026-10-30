@@ -24,9 +24,11 @@ function drawTank(x, y, ang, c1, c2) {
   ctx.restore();
 }
 
-function drawPlane(x, y, c1, c2) {
+// Самолёт: фюзеляж вдоль +X, плоскости поперёк. ang — направление полёта/наводки.
+function drawPlane(x, y, c1, c2, ang) {
   ctx.save();
   ctx.translate(x, y);
+  ctx.rotate(ang || 0);
   ctx.fillStyle = c1;
   ctx.beginPath(); ctx.moveTo(-6, -2); ctx.lineTo(6, -2); ctx.lineTo(2, -26); ctx.lineTo(-8, -26); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(-6, 2); ctx.lineTo(6, 2); ctx.lineTo(2, 26); ctx.lineTo(-8, 26); ctx.closePath(); ctx.fill();
@@ -232,19 +234,58 @@ function drawExplosionFx(e) {
 
 // ---- Участники боя ----
 
-// Палитра вражеской и player-техники по типам/уровням.
+// Палитра вражеской техники по типам.
 var ENEMY_COLORS = {
   tank:  ['#6b4a41', '#7d5a4e'],
   plane: ['#8a4a41', '#c98f7f'],
   boat:  ['#7a4038', '#b07068'],
   sold:  ['#6b4a41', '#9a8a5b']
 };
-var PLAYER_COLORS = {
+// Акцентные цвета (башня, кабина, форма) техники игрока по уровням.
+var PLAYER_DEFAULT_COLORS = {
   1: ['#4a6741', '#5d7a4e'],
   2: ['#3e6ea5', '#8fd0ff'],
   3: ['#3e6ea5', '#7fb9d8'],
   4: ['#4a6741', '#8a9a5b']
 };
+
+// Основной цвет корпуса техники/формы игрока — выбирается в меню перед стартом.
+var PLAYER_COLOR_NAMES = {
+  green:  'Зелёный',
+  sand:   'Песочный',
+  steel:  'Стальной',
+  urban:  'Городской',
+  winter: 'Зимний',
+  red:    'Красный'
+};
+var PLAYER_BASE_COLORS = {
+  green:  '#4a6741',
+  sand:   '#a8905c',
+  steel:  '#6b7784',
+  urban:  '#58606b',
+  winter: '#d3dbe0',
+  red:    '#a83a2e'
+};
+
+var playerColor = 'green';
+
+function setPlayerColor(c) {
+  if (!PLAYER_COLOR_NAMES[c]) return;
+  playerColor = c;
+  ensureAudio();
+  var names = Object.keys(PLAYER_COLOR_NAMES);
+  for (var i = 0; i < names.length; i++) {
+    var el = document.getElementById('color-' + names[i]);
+    if (el) el.className = 'swatch' + (names[i] === c ? ' active' : '');
+  }
+}
+
+// Цвета техники игрока на текущем уровне: [корпус выбранного цвета, акцент уровня].
+function playerUnitColors() {
+  var base = PLAYER_BASE_COLORS[playerColor] || PLAYER_BASE_COLORS.green;
+  var accent = PLAYER_DEFAULT_COLORS[level] || PLAYER_DEFAULT_COLORS[1];
+  return [base, accent[1]];
+}
 
 function drawEnemy(e) {
   var col = ENEMY_COLORS[e.type];
@@ -268,7 +309,7 @@ function drawEnemy(e) {
 
 function drawPlayerUnit() {
   var p = player;
-  var col = PLAYER_COLORS[level];
+  var col = playerUnitColors();
   if (level === 1) drawTank(p.x, p.y, p.ang, col[0], col[1]);
   else if (level === 2) drawPlane(p.x, p.y, col[0], col[1]);
   else if (level === 3) drawBoat(p.x, p.y, p.ang, col[0], col[1]);
@@ -279,6 +320,33 @@ function drawPlayerUnit() {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     circle(p.x, p.y, p.r);
   }
+}
+
+// Превью выбранного цвета в меню: техника игрока всех четырёх миссий на поле первого уровня.
+function drawMenuPreview() {
+  var savedLevel = level;
+  var savedPatches = patches;
+  level = 1;
+  patches = [];
+  drawGround();
+  patches = savedPatches;
+
+  var base = PLAYER_BASE_COLORS[playerColor] || PLAYER_BASE_COLORS.green;
+  var r = Math.min(W, H);
+  var px = W - Math.max(180, r * 0.24);
+  var py = H * 0.5;
+  // Один и тот же выбранный цвет — на танке (ур.1), самолёте (ур.2), катере (ур.3) и бойце (ур.4).
+  var gap = clamp(r * 0.13, 52, 96);
+  drawTank(px, py - gap * 1.5, -0.5, base, PLAYER_DEFAULT_COLORS[1][1]);
+  drawPlane(px + gap * 0.15, py - gap * 0.5, base, PLAYER_DEFAULT_COLORS[2][1], -Math.PI / 2);
+  drawBoat(px, py + gap * 0.5, 0, base, PLAYER_DEFAULT_COLORS[3][1]);
+  drawSold(px, py + gap * 1.5, -0.4, base, PLAYER_DEFAULT_COLORS[4][1], { bodyAng: -Math.PI / 2, walkT: 0 });
+  level = savedLevel;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.textAlign = 'center';
+  ctx.font = 'bold ' + Math.round(clamp(r * 0.03, 13, 22)) + 'px Arial';
+  ctx.fillText('Ваш цвет: «' + PLAYER_COLOR_NAMES[playerColor] + '»', px, py - gap * 2.2);
 }
 
 // ---- Фоны уровней ----
@@ -375,7 +443,7 @@ function bar(x, y, w, h, k, fg, label) {
 }
 
 var LEVEL_HINTS = {
-  2: 'ЛКМ — пулемёт | ПРОБЕЛ — бомба',
+  2: 'WASD — полёт | ЛКМ — пулемёт | ПРОБЕЛ — бомба',
   4: 'WASD — бег | ЛКМ — винтовка | G — граната'
 };
 
@@ -413,6 +481,13 @@ function drawBanner() {
 
 function renderList(list, fn) {
   for (var i = 0; i < list.length; i++) fn(list[i]);
+}
+
+// Кадр меню: показываем выбранную технику на поле первого уровня.
+function renderMenuFrame() {
+  ctx.save();
+  drawMenuPreview();
+  ctx.restore();
 }
 
 function render() {

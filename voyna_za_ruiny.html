@@ -15,6 +15,16 @@ canvas{position:fixed;left:0;top:0;display:block;}
 .btn.active{background:#8a9a5b;color:#141a0e;border-color:#cfe0a0;}
 .btn.big{font-size:20px;padding:14px 42px;background:#7a3b2e;border-color:#c96f56;}
 .row{display:flex;gap:10px;}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.swatch{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,0.25);cursor:pointer;padding:0;}
+.swatch:hover{border-color:rgba(255,255,255,0.6);}
+.swatch.active{border-color:#ffe082;box-shadow:0 0 0 3px rgba(255,224,130,0.35);}
+.swatch-green{background:#4a6741;}
+.swatch-sand{background:#a8905c;}
+.swatch-steel{background:#6b7784;}
+.swatch-urban{background:#58606b;}
+.swatch-winter{background:#d3dbe0;}
+.swatch-red{background:#a83a2e;}
 .hint{font-size:13px;color:#aab89a;line-height:1.7;}
 #errbar{display:none;position:fixed;top:0;left:0;right:0;background:#b71c1c;color:#fff;padding:8px;z-index:99;font-size:14px;text-align:center;}
 </style>
@@ -32,12 +42,21 @@ canvas{position:fixed;left:0;top:0;display:block;}
     <button type="button" id="diff-normal" class="btn active" onclick="setDiff('normal')">Нормально</button>
     <button type="button" id="diff-hard" class="btn" onclick="setDiff('hard')">Сложно</button>
   </div>
+  <p>Цвет игрока (танк на 1 уровне, самолёт на 2, корабль на 3, боец на 4):</p>
+  <div class="swatches">
+    <button type="button" title="Зелёный" id="color-green" class="swatch swatch-green active" onclick="setPlayerColor('green')"></button>
+    <button type="button" title="Песочный" id="color-sand" class="swatch swatch-sand" onclick="setPlayerColor('sand')"></button>
+    <button type="button" title="Стальной" id="color-steel" class="swatch swatch-steel" onclick="setPlayerColor('steel')"></button>
+    <button type="button" title="Городской" id="color-urban" class="swatch swatch-urban" onclick="setPlayerColor('urban')"></button>
+    <button type="button" title="Зимний" id="color-winter" class="swatch swatch-winter" onclick="setPlayerColor('winter')"></button>
+    <button type="button" title="Красный" id="color-red" class="swatch swatch-red" onclick="setPlayerColor('red')"></button>
+  </div>
   <button type="button" id="startbtn" class="btn big" onclick="startGame()">НАЧАТЬ ИГРУ</button>
   <p id="status"></p>
   <div class="hint">
     Клик по странице включает звук &bull; M — вкл/выкл звук<br>
     Уровень 1: WASD — движение, ЛКМ — пушка (башня за курсором)<br>
-    Уровень 2: мышь — полёт, ЛКМ — пулемёт, ПРОБЕЛ — бомба, сирена тревоги<br>
+    Уровень 2: WASD — полёт, ЛКМ — пулемёт (наведение за курсором), ПРОБЕЛ — бомба, сирена тревоги<br>
     Уровень 3: WASD — ход, ЛКМ — орудие (береговая турель слева!)<br>
     Уровень 4: WASD — бег, ЛКМ — винтовка, G — граната, мешки — укрытия
   </div>
