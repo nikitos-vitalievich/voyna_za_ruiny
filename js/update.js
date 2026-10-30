@@ -82,19 +82,11 @@ function updateBullets(dt) {
   }
 }
 
-// Движение игрока зависит от уровня (танк / самолёт по мыши / катер / пехота).
+// Движение игрока зависит от уровня (танк / самолёт / катер / пехота).
+// На всех уровнях управление одинаковое: WASD/стрелки, наведение — по курсору.
 function movePlayerByLevel(dt) {
-  if (level === 2) {
-    // Самолёт плавно следует за курсором.
-    var follow = Math.min(1, dt * 3.5);
-    player.x += (mouse.x - player.x) * follow;
-    player.y += (mouse.y - player.y) * follow;
-    player.x = clamp(player.x, 30, W - 30);
-    player.y = clamp(player.y, 30, H - 90);
-    return;
-  }
   var m = moveInput();
-  var speed = { 1: 130, 3: 150, 4: 215 }[level];
+  var speed = { 1: 130, 2: 175, 3: 150, 4: 215 }[level];
   if (level === 4 && (m[0] || m[1])) {
     var l = Math.sqrt(m[0] * m[0] + m[1] * m[1]);
     m = [m[0] / l, m[1] / l];

@@ -311,7 +311,7 @@ function drawPlayerUnit() {
   var p = player;
   var col = playerUnitColors();
   if (level === 1) drawTank(p.x, p.y, p.ang, col[0], col[1]);
-  else if (level === 2) drawPlane(p.x, p.y, col[0], col[1]);
+  else if (level === 2) drawPlane(p.x, p.y, col[0], col[1], p.ang);
   else if (level === 3) drawBoat(p.x, p.y, p.ang, col[0], col[1]);
   else drawSold(p.x, p.y, p.ang, col[0], col[1], {
     bodyAng: p.bodyAng, walkT: p.walkT, flash: p.flashT > 0
